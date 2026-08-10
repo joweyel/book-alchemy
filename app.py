@@ -125,6 +125,12 @@ def add_book() -> str:
     return render_template("add_book.html", authors=authors)
 
 
+@app.route("/", methods=["GET"])
+def index() -> Response:
+    """Redirect the site root to the library home page."""
+    return redirect(url_for("home"))
+
+
 @app.route("/home", methods=["GET"])
 def home() -> str:
     """Show the library, optionally filtered and sorted.
