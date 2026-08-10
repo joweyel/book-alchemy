@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>My Digital Library</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <div class="page">
+    <h1>📚 My Digital Library</h1>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="flash">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="nav-links">
+      <a href="/add_author">Add Author</a>
+      <a href="/add_book">Add Book</a>
+    </div>
+
+    <div class="toolbar">
+      <form class="search-form" action="/home" method="GET">
+        <input type="text" name="search" placeholder="Search by title or author..." value="{{ search or '' }}">
+        <input type="submit" value="Search">
+      </form>
+
+      <div class="sort-links">
+        <a href="/home?sort=title">Sort by Title</a>
+        <a href="/home?sort=author">Sort by Author</a>
+      </div>
+    </div>
+
+    {% if message %}
+      <p class="no-results">{{ message }}</p>
+    {% endif %}
+
+    <div class="book-grid">
+      {% for book in books %}
+      <div class="book-card">
+        <a href="/book/{{ book.id }}">
+          <img src="https://covers.openlibrary.org/b/isbn/{{ book.isbn }}-M.jpg" alt="Cover of {{ book.title }}">
+          <h3>{{ book.title }}</h3>
+        </a>
+        <div class="author">
+          by <a href="/author/{{ book.author.id }}">{{ book.author.name }}</a>
+        </div>
+        <div class="card-actions">
+          <form class="delete-form" action="/book/{{ book.id }}/delete" method="POST">
+            <input type="submit" value="Delete Book">
+          </form>
+          <form class="delete-form" action="/author/{{ book.author.id }}/delete" method="POST">
+            <input type="submit" value="Delete Author">
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+
+</html>

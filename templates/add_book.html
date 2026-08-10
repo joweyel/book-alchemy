@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Add Book</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <div class="page">
+    <h1>Add Book</h1>
+
+    <div class="nav-links">
+      <a href="/home">Back to Library</a>
+    </div>
+
+    {% if message %}
+      <div class="flash">{{ message }}</div>
+    {% endif %}
+
+    <div class="form-card">
+      <form action="/add_book" method="POST">
+        <label for="isbn">ISBN</label>
+        <input type="text" name="isbn" id="isbn" required>
+
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" required>
+
+        <label for="publication_year">Publication Year</label>
+        <input type="number" id="publication_year" name="publication_year">
+
+        <label for="author_id">Author</label>
+        <select name="author_id" id="author_id">
+          {% for author in authors %}
+          <option value="{{ author.id }}">{{ author.name }}</option>
+          {% endfor %}
+        </select>
+
+        <input type="submit" value="Add Book">
+      </form>
+    </div>
+  </div>
+</body>
+
+</html>

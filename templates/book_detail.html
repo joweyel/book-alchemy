@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>{{ book.title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <div class="page">
+    <div class="nav-links">
+      <a href="/home">Back to Library</a>
+    </div>
+
+    <div class="form-card" style="max-width: 500px; text-align: center;">
+      <img src="https://covers.openlibrary.org/b/isbn/{{ book.isbn }}-L.jpg" alt="Cover of {{ book.title }}" style="width: 200px; border-radius: 8px; margin-bottom: 1rem;">
+      <h1>{{ book.title }}</h1>
+      <p>by <a href="/author/{{ book.author.id }}">{{ book.author.name }}</a></p>
+      <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+      <p><strong>Publication Year:</strong> {{ book.publication_year }}</p>
+    </div>
+  </div>
+</body>
+
+</html>

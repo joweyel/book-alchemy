@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>{{ author.name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+  <div class="page">
+    <div class="nav-links">
+      <a href="/home">Back to Library</a>
+    </div>
+
+    <h1>{{ author.name }}</h1>
+    <p><strong>Born:</strong> {{ author.birth_date }}</p>
+    {% if author.date_of_death %}
+      <p><strong>Died:</strong> {{ author.date_of_death }}</p>
+    {% endif %}
+
+    <h2>Books by {{ author.name }}</h2>
+    <div class="book-grid">
+      {% for book in author.books %}
+      <div class="book-card">
+        <a href="/book/{{ book.id }}">
+          <img src="https://covers.openlibrary.org/b/isbn/{{ book.isbn }}-M.jpg" alt="Cover of {{ book.title }}">
+          <h3>{{ book.title }}</h3>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+
+</html>
