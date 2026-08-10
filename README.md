@@ -84,7 +84,11 @@ To quickly populate the library with 10 sample authors and books, run the app fi
 uv run python seed_data.py
 ```
 
-This sends requests to the running app's `/add_author` and `/add_book` routes, so the app must already be running on `localhost:5000`.
+This sends requests to the running app's `/add_author` and `/add_book` routes. By default it targets the URL set in `seed_data.py`; pass a different URL as an argument to target another instance instead:
+
+```bash
+uv run python seed_data.py http://localhost:5000
+```
 
 ## Project structure
 
