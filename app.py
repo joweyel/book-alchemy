@@ -1,9 +1,11 @@
 import os
 from datetime import date, datetime
-from flask import Flask, render_template, request, redirect, url_for, flash
+
+from flask import Flask, flash, redirect, render_template, request, url_for
+from sqlalchemy.exc import IntegrityError
 from werkzeug.wrappers import Response
 
-from data_models import db, Author, Book
+from data_models import Author, Book, db
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key"
@@ -36,7 +38,8 @@ def add_author() -> str:
         The rendered ``add_author.html`` page.
     """
     if request.method == "POST":
-        name: str | None = request.form.get("name")
+        # Checks for learing or trailing whitespaces and removes them
+        name: str = (request.form.get("name") or "").strip()
         try:
             birth_date: date | None = parse_date(request.form.get("birth_date"))
             date_of_death: date | None = parse_date(request.form.get("date_of_death"))
@@ -49,14 +52,30 @@ def add_author() -> str:
         if not name:
             return render_template("add_author.html", message="Name is required.")
 
+        # Check if Author already exists in database (case insensitive)
+        if db.session.scalar(
+            db.select(Author).where(db.func.lower(Author.name) == name.lower())
+        ):
+            return render_template(
+                "add_author.html",
+                message=f"An author named '{name}' already exists.",
+            )
+
         new_author: Author = Author(
             name=name,
             birth_date=birth_date,
             date_of_death=date_of_death,
         )
-        db.session.add(new_author)
-        db.session.commit()
-
+        # Add author and give warning if the insert failed
+        try:
+            db.session.add(new_author)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return render_template(
+                "add_author.html",
+                message=f"An author named '{name}' already exists.",
+            )
         return render_template(
             "add_author.html",
             message="Author added successfully!",
@@ -79,8 +98,12 @@ def add_book() -> str:
         The rendered ``add_book.html`` page.
     """
     if request.method == "POST":
-        isbn: str | None = request.form.get("isbn")
-        title: str | None = request.form.get("title")
+        # Additional empty string fallback and whitespace 'purge' for safety
+        # + isbn-normalization
+        isbn: str = (
+            (request.form.get("isbn") or "").replace("-", "").replace(" ", "").strip()
+        )
+        title: str = (request.form.get("title") or "").strip()
         publication_year_raw: str | None = request.form.get("publication_year")
         author_id_raw: str | None = request.form.get("author_id")
 
@@ -90,19 +113,28 @@ def add_book() -> str:
             publication_year: int = int(publication_year_raw)
             author_id: int = int(author_id_raw)
         except ValueError:
-            authors: list[Author] = Author.query.all()
+            authors = db.session.scalars(db.select(Author)).all()
             return render_template(
                 "add_book.html",
                 authors=authors,
                 message="Publication year and author are required.",
             )
 
-        if not isbn or not title or not Author.query.get(author_id):
-            authors: list[Author] = Author.query.all()
+        if not isbn or not title or not db.session.get(Author, author_id):
+            authors = db.session.scalars(db.select(Author)).all()
             return render_template(
                 "add_book.html",
                 authors=authors,
                 message="ISBN, title, and a valid author are required.",
+            )
+
+        # ISBN-Check: Is book with specified ISBN already in the database
+        if db.session.scalar(db.select(Book).where(Book.isbn == isbn)):
+            authors = db.session.scalars(db.select(Author)).all()
+            return render_template(
+                "add_book.html",
+                authors=authors,
+                message=f"A book with ISBN {isbn} is already in the library.",
             )
 
         new_book: Book = Book(
@@ -114,14 +146,14 @@ def add_book() -> str:
         db.session.add(new_book)
         db.session.commit()
 
-        authors: list[Author] = Author.query.all()
+        authors = db.session.scalars(db.select(Author)).all()
         return render_template(
             "add_book.html",
             authors=authors,
             message="Book added successfully!",
         )
     # GET case
-    authors: list[Author] = Author.query.all()
+    authors = db.session.scalars(db.select(Author)).all()
     return render_template("add_book.html", authors=authors)
 
 
@@ -144,27 +176,26 @@ def home() -> str:
     str
         The rendered ``home.html`` page.
     """
-    # books: list[Book] = Book.query.all()
     sort_by: str = request.args.get("sort", "title")
-    search: str = request.args.get("search", "")
+    search: str = request.args.get("search", "").strip()
 
-    query = Book.query
+    query = db.select(Book)
     if search or sort_by == "author":
         query = query.join(Author)
     if search:
-        query = query.filter(
+        query = query.where(
             db.or_(
                 Book.title.ilike(f"%{search}%"),
                 Author.name.ilike(f"%{search}%"),
             )
         )
 
-    books: list[Book] = query.order_by(
-        Author.name if sort_by == "author" else Book.title
+    books = db.session.scalars(
+        query.order_by(Author.name if sort_by == "author" else Book.title)
     ).all()
 
     message: str | None = (
-        f"No books found containing {search}" if search and not books else None
+        f'No books found containing "{search}"' if search and not books else None
     )
     return render_template(
         "home.html",
@@ -189,7 +220,7 @@ def delete_book(book_id: int) -> Response:
     Response
         Redirect response to the home page.
     """
-    book: Book = Book.query.get_or_404(book_id)
+    book: Book = db.get_or_404(Book, book_id)
     author: Author = book.author
 
     db.session.delete(book)
@@ -217,7 +248,7 @@ def delete_author(author_id: int) -> Response:
     Response
         Redirect response to the home page.
     """
-    author: Author = Author.query.get_or_404(author_id)
+    author: Author = db.get_or_404(Author, author_id)
     for book in list(author.books):
         db.session.delete(book)
     db.session.delete(author)
@@ -241,7 +272,7 @@ def book_detail(book_id: int) -> str:
     str
         The rendered ``book_detail.html`` page.
     """
-    book: Book = Book.query.get_or_404(book_id)
+    book: Book = db.get_or_404(Book, book_id)
     return render_template("book_detail.html", book=book)
 
 
@@ -259,7 +290,7 @@ def author_detail(author_id: int) -> str:
     str
         The rendered ``author_detail.html`` page.
     """
-    author: Author = Author.query.get_or_404(author_id)
+    author: Author = db.get_or_404(Author, author_id)
     return render_template("author_detail.html", author=author)
 
 

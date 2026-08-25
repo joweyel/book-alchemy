@@ -11,14 +11,14 @@
 
 <body>
   <div class="page">
-    <h1>📚 My Digital Library</h1>
+    <h1><a href="{{ url_for('home') }}" title="Back to the Library">📚</a> My Digital Library</h1>
 
     {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for msg in messages %}
-          <div class="flash">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="flash">{{ msg }}</div>
+    {% endfor %}
+    {% endif %}
     {% endwith %}
 
     <div class="nav-links">
@@ -28,7 +28,8 @@
 
     <div class="toolbar">
       <form class="search-form" action="/home" method="GET">
-        <input type="text" name="search" placeholder="Search by title or author..." value="{{ search or '' }}">
+        <input type="text" name="search" required pattern=".*\S.*" placeholder="Search by title or author..."
+          value="{{ search or '' }}">
         <input type="submit" value="Search">
       </form>
 
@@ -39,7 +40,7 @@
     </div>
 
     {% if message %}
-      <p class="no-results">{{ message }}</p>
+    <p class="no-results">{{ message }}</p>
     {% endif %}
 
     <div class="book-grid">
@@ -53,10 +54,12 @@
           by <a href="/author/{{ book.author.id }}">{{ book.author.name }}</a>
         </div>
         <div class="card-actions">
-          <form class="delete-form" action="/book/{{ book.id }}/delete" method="POST">
+          <form class="delete-form" action="/book/{{ book.id }}/delete" method="POST"
+            onsubmit="return confirm('Do you really want to delete this book?')">
             <input type="submit" value="Delete Book">
           </form>
-          <form class="delete-form" action="/author/{{ book.author.id }}/delete" method="POST">
+          <form class="delete-form" action="/author/{{ book.author.id }}/delete" method="POST"
+            onsubmit="return confirm('Do you really want to delete this author and the authored books?')">
             <input type="submit" value="Delete Author">
           </form>
         </div>
