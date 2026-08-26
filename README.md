@@ -18,7 +18,7 @@ A Flask web application for managing a personal digital library. Add authors and
 
 ## Requirements
 
-- Python 3.14+
+- Python 3.12+
 - [uv](https://docs.astral.sh/uv/) for dependency management
 
 ## Setup
@@ -78,7 +78,7 @@ Go to `/home` to see all books as cards, with cover image, title, and author.
 
 ### Seed sample data
 
-To quickly populate the library with 10 sample authors and books, run the app first, then in a separate terminal:
+To quickly populate the library with 12 sample authors and books, run the app first, then in a separate terminal:
 
 ```bash
 uv run python seed_data.py

@@ -16,7 +16,9 @@
     </div>
 
     <h1>{{ author.name }}</h1>
-    <p><strong>Born:</strong> {{ author.birth_date }}</p>
+    {% if author.birth_date %}
+      <p><strong>Born:</strong> {{ author.birth_date }}</p>
+    {% endif %}
     {% if author.date_of_death %}
       <p><strong>Died:</strong> {{ author.date_of_death }}</p>
     {% endif %}
